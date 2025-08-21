@@ -61,7 +61,7 @@ wb = Workbook()
 ws = wb.active
 ws.title = f"Commits-{BRANCH}"
 
-# Header sesuai permintaan
+# Header Import Template Odoo  
 ws.append(["Start Date", "Project", "Task", "Description", "Hours Spent"])
 
 for c in commits:

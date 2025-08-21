@@ -19,14 +19,6 @@ TOKEN = os.getenv("GITLAB_TOKEN")
 # Workbook
 wb = openpyxl.Workbook()
 
-# Sheet 1: Raw commits
-ws1 = wb.active
-ws1.title = "Commits"
-ws1.append(["sha", "author", "email", "date_time", "message"])
-
-# Sheet 2: Odoo Import format
-ws2 = wb.create_sheet("Odoo Import")
-ws2.append(["Start Date", "Project", "Task", "Description", "Hours Spent"])
 
 # Request commits
 url = f"{GITLAB_API}/projects/{PROJECT_ID}/repository/commits"
@@ -45,28 +37,31 @@ if r.status_code != 200:
 
 commits = r.json()
 
+
+# Buat workbook
+wb = openpyxl.Workbook()
+ws = wb.active
+ws.title = "Odoo Import"
+
+# Tambahkan header sekali
+ws.append(["Start Date", "Project", "Task", "Description", "Hours Spent"])
+
 for c in commits:
-    email = c["author_email"].strip().lower()   # normalisasi email
-    #filter by email 
-    if email == "fryatama@gmail.com":
-        sha = c["id"]
-        author = c["author_name"]
+    email = c["author_email"].strip().lower()
+    
+    if email == "fryatama@gmail.com":   # filter khusus Fryatama
         raw_date = c["created_at"]
         dt = parser.isoparse(raw_date)
-        date_time = dt.strftime("%Y-%m-%d %H:%M:%S")
         message = c["message"].replace("\n", " ")
 
-        # Raw commits (hanya Fryatama yg masuk sheet1)
-        ws1.append([sha, author, email, date_time, message])
-
-        # Filter email khusus untuk sheet 2
-        ws2.append([
-            dt.strftime("%Y-%m-%d"),   # Start Date
+        ws.append([
+            dt.strftime("%Y-%m-%d %H:%M:%S"),   # Start Datetime
             "Internal",                # Project
-            "Vallo Approval",          # Task 
-            message,                   # Description = commit message
-            1                          # Hours Spent (default 1 jam per commit)
+            "Vallo Approval",          # Task
+            message,                   # Description (commit message)
+            8                          # Hours Spent (default 8 jam / commit)
         ])
 
+# Simpan file
 wb.save("gitlab_commits_ebkm_Mobile.xlsx")
 print("✅ Export selesai")
